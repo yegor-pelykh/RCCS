@@ -49,7 +49,7 @@ namespace RC.Client
             {
                 Id = Storage.Machine.InstanceId
             });
-            var message = Connection.ReadMessage();
+            var message = Connection.WaitMessage();
             if (message is ServerMessage.Greeting serverGreeting)
             {
 

@@ -42,6 +42,12 @@ namespace RC.Client.Connection
         {
             return ServerMessage.Parse(_sslStream);
         }
+        
+        public ServerMessage WaitMessage()
+        {
+            do { } while (!_sslStream.CanRead);
+            return ReadMessage();
+        }
 
         public void Dispose()
         {
