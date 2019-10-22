@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RC.Common.Certification\RC.Common.Certification.csproj" />
+    <ProjectReference Include="..\RC.Common.Message\RC.Common.Message.csproj" />
+  </ItemGroup>
+
+</Project>
