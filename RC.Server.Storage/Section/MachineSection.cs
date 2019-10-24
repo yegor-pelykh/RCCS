@@ -1,46 +1,27 @@
 ﻿using System;
-using System.IO;
+using System.Net;
+using Newtonsoft.Json;
 
 namespace RC.Server.Storage.Section
 {
-    public class MachineSection : IDisposable
+    public class MachineSection : ICloneable
     {
-        public MachineSection()
+        #region Default Value Getters
+
+        internal static MachineSection GetDefault()
         {
-            Directory.CreateDirectory(MachineDirectoryPath);
-        }
-
-        #region Properties
-
-        #endregion
-
-        #region Public Methods
-
-        public void Dispose()
-        {
+            return new MachineSection();
         }
 
         #endregion
 
-        #region Private Methods
+        #region ICloneable Implementation
 
-        #endregion
+        public object Clone()
+        {
+            return new MachineSection();
+        }
 
-        #region Fields
-
-        #endregion
-
-        #region Static Readonly Fields
-
-        private static readonly string MachineDirectoryPath =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DirectoryName);
-        
-        #endregion
-
-        #region Constants
-
-        private const string DirectoryName = "RC";
-        
         #endregion
 
     }
