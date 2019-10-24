@@ -2,11 +2,9 @@
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
-using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using RC.Common.Message;
-using RC.Common.Message.ServerMessages;
 
 namespace RC.Server
 {
@@ -43,14 +41,13 @@ namespace RC.Server
                 stream.ReadTimeout = 5000;
                 stream.WriteTimeout = 5000;
 
-                communicationHandler?.Invoke(stream);
+                communicationHandler?.Invoke(client, stream);
             }
-            catch (AuthenticationException e)
+            catch (Exception e)
             {
                 Console.WriteLine("Exception: {0}", e.Message);
                 if (e.InnerException != null)
                     Console.WriteLine("Inner exception: {0}", e.InnerException.Message);
-                Console.WriteLine("Authentication failed - closing the connection.");
             }
             finally
             {
@@ -75,6 +72,11 @@ namespace RC.Server
             return ReadMessage(stream);
         }
 
+        public static IPEndPoint GetClientEndPoint(this TcpClient client)
+        {
+            return client.Client.RemoteEndPoint as IPEndPoint;
+        }
+
         #endregion
 
         #region Fields
@@ -91,7 +93,7 @@ namespace RC.Server
 
         #region Delegate Definitions
 
-        internal delegate void CommunicationHandler(SslStream stream);
+        internal delegate void CommunicationHandler(TcpClient client, SslStream stream);
 
         #endregion
 
