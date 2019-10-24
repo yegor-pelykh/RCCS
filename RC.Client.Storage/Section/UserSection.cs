@@ -1,40 +1,25 @@
 ﻿using System;
-using System.IO;
 
 namespace RC.Client.Storage.Section
 {
-    public class UserSection : IDisposable
+    public class UserSection : ICloneable
     {
-        public UserSection()
+        #region Default Value Getters
+
+        internal static UserSection GetDefault()
         {
-            Directory.CreateDirectory(UserDirectoryPath);
+            return new UserSection();
         }
 
-        #region Properties
-        
         #endregion
 
-        #region Public Methods
-        public void Dispose()
+        #region ICloneable Implementation
+
+        public object Clone()
         {
+            return new UserSection();
         }
-        #endregion
 
-        #region Private Methods
-        
-        #endregion
-
-        #region Fields
-
-        #endregion
-
-        #region Static Readonly Fields
-        private static readonly string UserDirectoryPath =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), DirectoryName);
-        #endregion
-
-        #region Constants
-        private const string DirectoryName = "RC";
         #endregion
 
     }

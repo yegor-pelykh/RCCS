@@ -1,86 +1,55 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
+using System.Net;
+using Newtonsoft.Json;
+using RC.Client.Storage.Converters;
 
 namespace RC.Client.Storage.Section
 {
-    public class MachineSection : IDisposable
+    public class MachineSection : ICloneable
     {
-        public MachineSection()
-        {
-            Directory.CreateDirectory(MachineDirectoryPath);
-
-            LoadIdentification();
-        }
-
         #region Properties
 
-        public Guid InstanceId
+        public Guid InstanceId { get; set; }
+
+        [JsonConverter(typeof(IPAddressConverter))]
+        public IPAddress LastKnownIpAddress { get; set; }
+
+        #endregion
+
+        #region Default Value Getters
+
+        internal static MachineSection GetDefault()
         {
-            get => _instanceId;
-            set
+            return new MachineSection
             {
-                _instanceId = value;
-                SaveIdentification();
-            }
+                InstanceId = GetDefaultInstanceId(),
+                LastKnownIpAddress = GetDefaultLastKnownIpAddress()
+            };
+        }
+
+        private static Guid GetDefaultInstanceId()
+        {
+            return Guid.NewGuid();
+        }
+
+        private static IPAddress GetDefaultLastKnownIpAddress()
+        {
+            return null;
         }
 
         #endregion
 
-        #region Public Methods
+        #region ICloneable Implementation
 
-        public void Dispose()
+        public object Clone()
         {
-        }
-
-        #endregion
-
-        #region Private Methods
-
-        private void LoadIdentification()
-        {
-            try
+            return new MachineSection
             {
-                var strGuid = File.ReadAllText(IdentificationFilePath);
-                InstanceId = Guid.Parse(strGuid);
-            }
-            catch (Exception e)
-            {
-                InstanceId = Guid.NewGuid();
-
-                // TODO: It should be desktop notification
-                Debug.Print(e.Message, e.InnerException?.Message);
-                Debug.Print("Instance Id was regenerated.");
-            }
+                InstanceId = InstanceId,
+                LastKnownIpAddress = LastKnownIpAddress
+            };
         }
 
-        private void SaveIdentification()
-        {
-            File.WriteAllText(IdentificationFilePath, InstanceId.ToString());
-        }
-
-        #endregion
-
-        #region Fields
-
-        private Guid _instanceId;
-        
-        #endregion
-
-        #region Static Readonly Fields
-
-        private static readonly string MachineDirectoryPath =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DirectoryName);
-        private static readonly string IdentificationFilePath =
-            Path.Combine(MachineDirectoryPath, IdentificationFileName);
-        
-        #endregion
-
-        #region Constants
-
-        private const string DirectoryName = "RC";
-        private const string IdentificationFileName = "id.storage";
-        
         #endregion
 
     }
