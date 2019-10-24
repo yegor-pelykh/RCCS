@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using Avalonia;
 using Avalonia.Markup.Xaml;
 using RC.Client.Connection;
 using RC.Client.Storage;
@@ -9,7 +8,7 @@ using ServerMessage = RC.Common.Message.ServerMessages;
 
 namespace RC.Client
 {
-    public class App : Application
+    public class ClientApplication : Avalonia.Application
     {
         #region Public Methods
 
@@ -42,7 +41,7 @@ namespace RC.Client
 
         private void Greet()
         {
-            if (Connection == null || Storage == null)
+            if (Storage == null || Connection == null)
                 return;
 
             Connection.SendMessage(new ClientMessage.Greeting
@@ -52,7 +51,11 @@ namespace RC.Client
             var message = Connection.WaitMessage();
             if (message is ServerMessage.Greeting serverGreeting)
             {
-
+                Application.Storage.UpdateMachineSection(section =>
+                {
+                    section.LastKnownIpAddress = serverGreeting.Ip;
+                    return true;
+                });
             }
         }
 
@@ -64,7 +67,6 @@ namespace RC.Client
 
         private void ReleaseResources()
         {
-            Storage?.Dispose();
             Connection?.Dispose();
         }
 

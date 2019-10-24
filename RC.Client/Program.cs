@@ -9,12 +9,12 @@ namespace RC.Client
         public static void Main(string[] args) => BuildAvaloniaApp().Start(AppMain, args);
 
         public static AppBuilder BuildAvaloniaApp()
-            => AppBuilder.Configure<App>()
+            => AppBuilder.Configure<ClientApplication>()
                 .UsePlatformDetect()
                 .LogToDebug()
                 .UseReactiveUI();
 
-        private static void AppMain(Application app, string[] args)
+        private static void AppMain(Avalonia.Application app, string[] args)
         {
             var mainWindow = new MainWindow();
             app.Run(mainWindow);
