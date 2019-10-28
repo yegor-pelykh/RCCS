@@ -4,10 +4,10 @@
     {
         public MainViewModel()
         {
-            MachineInfo = new MachineInfoViewModel();
+            DeviceInfo = new DeviceInfoViewModel();
         }
 
-        public MachineInfoViewModel MachineInfo { get; }
+        public DeviceInfoViewModel DeviceInfo { get; }
 
     }
 
