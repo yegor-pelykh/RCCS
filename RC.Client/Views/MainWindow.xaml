@@ -18,15 +18,27 @@
         </Grid.RowDefinitions>
 
         <!-- Device Info -->
-        <Grid Margin="10">
+        <Grid Margin="10" DataContext="{Binding DeviceInfo}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Text="Device info" FontWeight="Bold" />
-            <StackPanel Grid.Row="1" DataContext="{Binding MachineInfo}">
-                <!--<TextBlock Text="{Binding Path=..., StringFormat=...: {0}}" />-->
-            </StackPanel>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Row="0" Grid.Column="0"
+                       Text="Device ID: " FontWeight="Bold"
+                       VerticalAlignment="Center" />
+            <TextBox Grid.Row="0" Grid.Column="1"
+                     Text="{Binding Path=InstanceId, Converter={StaticResource GuidToStringConverter}, Mode=OneWay}"
+                     IsReadOnly="True"  />
+            <TextBlock Grid.Row="1" Grid.Column="0"
+                       Text="IP Address: " FontWeight="Bold"
+                       VerticalAlignment="Center" />
+            <TextBox Grid.Row="1" Grid.Column="1"
+                     Text="{Binding Path=IpAddress, Converter={StaticResource IPAddressToStringConverter}, Mode=OneWay}"
+                     IsReadOnly="True" />
         </Grid>
 
     </Grid>
