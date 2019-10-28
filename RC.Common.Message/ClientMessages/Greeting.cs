@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using RC.Common.Helpers;
+using RC.Common.Helpers.StaticHelpers;
 
 namespace RC.Common.Message.ClientMessages
 {

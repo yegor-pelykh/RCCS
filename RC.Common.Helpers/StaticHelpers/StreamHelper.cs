@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace RC.Common.Helpers
+namespace RC.Common.Helpers.StaticHelpers
 {
     public static class StreamHelper
     {
