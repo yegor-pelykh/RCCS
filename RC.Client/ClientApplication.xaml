@@ -3,7 +3,8 @@
              xmlns:local="clr-namespace:RC.Client"
              x:Class="RC.Client.ClientApplication">
     <Application.Styles>
-        <StyleInclude Source="avares://Avalonia.Themes.Default/DefaultTheme.xaml"/>
-        <StyleInclude Source="avares://Avalonia.Themes.Default/Accents/BaseLight.xaml"/>
+        <StyleInclude Source="avares://Avalonia.Themes.Default/DefaultTheme.xaml" />
+        <StyleInclude Source="avares://Avalonia.Themes.Default/Accents/BaseLight.xaml" />
+        <StyleInclude Source="/Theme/Styles.xaml" />
     </Application.Styles>
 </Application>

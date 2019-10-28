@@ -1,0 +1,16 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:RC.Common.Helpers.Markup.Converters;assembly=RC.Common.Helpers">
+    
+    <Style>
+        <Style.Resources>
+            <converters:GuidToStringConverter x:Key="GuidToStringConverter" />
+            <converters:IPAddressToStringConverter x:Key="IPAddressToStringConverter" />
+        </Style.Resources>
+    </Style>
+
+    <Style Selector="TextBox">
+        <Setter Property="BorderThickness" Value="0 0 0 1" />
+    </Style>
+    
+</Styles>
