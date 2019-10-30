@@ -2,9 +2,10 @@
         <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <TargetFramework>netcoreapp3.0</TargetFramework>
+        <ApplicationIcon>app_icon.ico</ApplicationIcon>
+        <Authors>Yegor Pelykh</Authors>
     </PropertyGroup>
     <ItemGroup>
-        <Folder Include="Assets\" />
         <Compile Update="**\*.xaml.cs">
             <DependentUpon>%(Filename)</DependentUpon>
         </Compile>
@@ -25,6 +26,7 @@
         <PackageReference Include="Avalonia.ReactiveUI" Version="0.8.3" />
     </ItemGroup>
     <ItemGroup>
+        <EmbeddedResource Include="Assets\app_icon.ico" />
         <EmbeddedResource Include="Views\MainWindow.xaml">
             <Generator>MSBuild:Compile</Generator>
         </EmbeddedResource>
