@@ -1,10 +1,10 @@
 using System;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia.Markup.Xaml;
 using RC.Client.Connection;
 using RC.Client.Storage;
-using ClientMessage = RC.Common.Message.ClientMessages;
-using ServerMessage = RC.Common.Message.ServerMessages;
 
 namespace RC.Client
 {
@@ -15,20 +15,11 @@ namespace RC.Client
         public override void Initialize()
         {
             base.Initialize();
-            try
-            {
-                Storage = new DataStorage();
-                Connection = new TLSConnection();
-                Greet();
-            }
-            catch (Exception e)
-            {
-                Debug.Print(e.Message, e.InnerException?.Message);
-                ForceExit();
-            }
+            LoadCriticalComponents();
             AvaloniaXamlLoader.Load(this);
+            ReconnectToServer();
         }
-
+        
         protected override void OnExiting(object sender, EventArgs e)
         {
             ReleaseResources();
@@ -39,23 +30,17 @@ namespace RC.Client
 
         #region Private Methods
 
-        private void Greet()
+        private void LoadCriticalComponents()
         {
-            if (Storage == null || Connection == null)
-                return;
-
-            Connection.SendMessage(new ClientMessage.Greeting
+            try
             {
-                Id = Storage.Machine.InstanceId
-            });
-            var message = Connection.WaitMessage();
-            if (message is ServerMessage.Greeting serverGreeting)
+                Storage = new DataStorage();
+                Connection = new TLSClient();
+            }
+            catch (Exception e)
             {
-                Application.Storage.UpdateMachineSection(section =>
-                {
-                    section.LastKnownIpAddress = serverGreeting.Ip;
-                    return true;
-                });
+                Debug.Print(e.Message, e.InnerException?.Message);
+                ForceExit();
             }
         }
 
@@ -67,7 +52,49 @@ namespace RC.Client
 
         private void ReleaseResources()
         {
-            Connection?.Dispose();
+            DisconnectFromServer();
+        }
+
+        private void ReconnectToServer()
+        {
+            Task.Run(() =>
+            {
+                var isReconnecting = false;
+                while (!IsConnected)
+                {
+                    if (isReconnecting)
+                    {
+                        Task.Run(() =>
+                        {
+                            for (ReconnectionTime = StartReconnectionTime;
+                                ReconnectionTime > 0;
+                                ReconnectionTime -= ReconnectionTimeout)
+                                Thread.Sleep(ReconnectionTimeout);
+                        }).Wait();
+                    }
+                    isReconnecting = true;
+                    ConnectToServer();
+                }
+            });
+        }
+
+        private void ConnectToServer()
+        {
+            try
+            {
+                Connection.Connect();
+                IsConnected = true;
+            }
+            catch
+            {
+                DisconnectFromServer();
+            }
+        }
+
+        private void DisconnectFromServer()
+        {
+            Connection.Disconnect();
+            IsConnected = false;
         }
 
         #endregion
@@ -76,10 +103,83 @@ namespace RC.Client
 
         public DataStorage Storage { get; private set; }
 
-        public TLSConnection Connection { get; private set; }
+        public TLSClient Connection { get; private set; }
+
+        public bool IsConnected
+        {
+            get => _isConnected;
+            private set
+            {
+                if (value == _isConnected)
+                    return;
+
+                _isConnected = value;
+                ConnectionStateChanged?.Invoke(this, new ConnectionStateChangedEventArgs(_isConnected));
+            }
+        }
+
+        public int ReconnectionTime
+        {
+            get => _reconnectionTime;
+            private set
+            {
+                if (value == _reconnectionTime)
+                    return;
+
+                _reconnectionTime = value;
+                ReconnectionTimeChanged?.Invoke(this, new ReconnectionTimeChangedEventArgs(_reconnectionTime));
+            }
+        }
+
+        #endregion
+
+        #region Private Fields
+
+        private bool _isConnected;
+        private int _reconnectionTime;
+
+        #endregion
+
+        #region Events
+
+        internal event EventHandler<ConnectionStateChangedEventArgs> ConnectionStateChanged;
+        internal event EventHandler<ReconnectionTimeChangedEventArgs> ReconnectionTimeChanged;
+
+        #endregion
+
+        #region Constants
+
+        private const int StartReconnectionTime = 5000;
+        private const int ReconnectionTimeout = 1000;
 
         #endregion
 
     }
+
+    #region EventArgs
+
+    internal class ConnectionStateChangedEventArgs : EventArgs
+    {
+        internal ConnectionStateChangedEventArgs(bool isConnected)
+        {
+            IsConnected = isConnected;
+        }
+
+        public bool IsConnected { get; }
+
+    }
+
+    internal class ReconnectionTimeChangedEventArgs : EventArgs
+    {
+        internal ReconnectionTimeChangedEventArgs(int remainingTime)
+        {
+            RemainingTime = remainingTime;
+        }
+
+        public int RemainingTime { get; }
+
+    }
+
+    #endregion
 
 }

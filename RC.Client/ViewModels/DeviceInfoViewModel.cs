@@ -7,8 +7,8 @@ namespace RC.Client.ViewModels
     {
         public DeviceInfoViewModel()
         {
-            InstanceId = Application.Storage.Machine.InstanceId;
-            IpAddress = Application.Storage.Machine.LastKnownIpAddress;
+            InstanceId = Application.Instance.Storage.Machine.InstanceId;
+            IpAddress = Application.Instance.Storage.Machine.LastKnownIpAddress;
         }
 
         #region Properties
