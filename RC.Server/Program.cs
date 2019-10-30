@@ -32,7 +32,7 @@ namespace RC.Server
                 return;
             }
 
-            TLSServer.Run(certificate, Communicator.OnCommunication);
+            TLSServer.Run(certificate, CommunicationHandler.OnCommunication);
         }
 
     }

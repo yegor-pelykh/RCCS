@@ -5,14 +5,16 @@ using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using RC.Common.Message;
+using ClientMessages = RC.Common.Message.ClientMessages;
+using ServerMessages = RC.Common.Message.ServerMessages;
 
 namespace RC.Server
 {
     internal static class TLSServer
     {
-        #region Public Methods
+        #region Internal Methods
 
-        public static void Run(X509Certificate2 certificate, CommunicationHandler communicationHandler)
+        internal static void Run(X509Certificate2 certificate, CommunicationHandler communicationHandler)
         {
             _certificate = certificate;
 
@@ -27,12 +29,34 @@ namespace RC.Server
             }
         }
 
+        internal static void SendMessage(this SslStream stream, ServerMessage message)
+        {
+            ServerMessage.Send(stream, message);
+        }
+
+        internal static ClientMessage ReadMessage(this SslStream stream)
+        {
+            return ClientMessage.Parse(stream);
+        }
+
+        internal static ClientMessage WaitMessage(this SslStream stream)
+        {
+            do { } while (!stream.CanRead);
+            return ReadMessage(stream);
+        }
+
+        internal static IPEndPoint GetClientEndPoint(this TcpClient client)
+        {
+            return client.Client.RemoteEndPoint as IPEndPoint;
+        }
+
         #endregion
 
         #region Private Methods
 
         private static void ProcessClient(TcpClient client, CommunicationHandler communicationHandler)
         {
+            var clientId = Guid.Empty;
             var stream = new SslStream(client.GetStream(), false);
             try
             {
@@ -40,6 +64,8 @@ namespace RC.Server
 
                 stream.ReadTimeout = 5000;
                 stream.WriteTimeout = 5000;
+
+                clientId = Greet(client, stream);
 
                 communicationHandler?.Invoke(client, stream);
             }
@@ -51,30 +77,29 @@ namespace RC.Server
             }
             finally
             {
-                stream.Close();
-                client.Close();
+                if (clientId != Guid.Empty)
+                    ClientManager.RemoveClient(clientId);
+                ClientManager.CloseClient(client);
             }
         }
 
-        public static void SendMessage(this SslStream stream, ServerMessage message)
+        private static Guid Greet(TcpClient client, SslStream stream)
         {
-            ServerMessage.Send(stream, message);
-        }
+            var message = stream.WaitMessage();
+            if (message.MessageType != ClientMessageType.Greeting ||
+                !(message is ClientMessages.Greeting clientGreeting))
+                throw new Exception("The first message from the client should be a greeting.");
 
-        public static ClientMessage ReadMessage(this SslStream stream)
-        {
-            return ClientMessage.Parse(stream);
-        }
-        
-        public static ClientMessage WaitMessage(this SslStream stream)
-        {
-            do { } while (!stream.CanRead);
-            return ReadMessage(stream);
-        }
+            var id = clientGreeting.Id;
+            ClientManager.AddClient(clientGreeting.Id, client);
 
-        public static IPEndPoint GetClientEndPoint(this TcpClient client)
-        {
-            return client.Client.RemoteEndPoint as IPEndPoint;
+            var endPoint = client.GetClientEndPoint();
+            stream.SendMessage(new ServerMessages.Greeting
+            {
+                Ip = endPoint.Address
+            });
+
+            return id;
         }
 
         #endregion
