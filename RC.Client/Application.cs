@@ -4,7 +4,7 @@ namespace RC.Client
 {
     internal static class Application
     {
-        internal static DataStorage Storage => ((ClientApplication) Avalonia.Application.Current).Storage;
+        internal static ClientApplication Instance => (ClientApplication) Avalonia.Application.Current;
 
     }
 
