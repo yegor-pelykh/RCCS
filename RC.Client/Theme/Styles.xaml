@@ -4,6 +4,7 @@
     
     <Style>
         <Style.Resources>
+            <converters:IsGreaterThanConverter x:Key="IsGreaterThanConverter" />
             <converters:GuidToStringConverter x:Key="GuidToStringConverter" />
             <converters:IPAddressToStringConverter x:Key="IPAddressToStringConverter" />
         </Style.Resources>
