@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
+using RC.Common.Helpers.StaticHelpers;
 using RC.Common.Message;
 using ClientMessages = RC.Common.Message.ClientMessages;
 using ServerMessages = RC.Common.Message.ServerMessages;
@@ -17,42 +18,40 @@ namespace RC.Client.Connection
         {
             Disconnect();
 
-            _client = new TcpClient();
-            _client.Connect(new IPAddress(ServerIp), ServerPort);
+            _client = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
-            _sslStream = new SslStream(_client.GetStream(), false, OnUserCertificateValidation);
-            _sslStream.AuthenticateAsClient(ServerCertificateName);
+            var remoteEndPoint = new IPEndPoint(ServerIp, ServerPort);
+            _client.Connect(remoteEndPoint);
+
+            var ns = new NetworkStream(_client, true);
+
+            _stream = new SslStream(ns, false, OnUserCertificateValidation);
+            _stream.AuthenticateAsClient(ServerCertificateName);
 
             Greet();
         }
 
         public void Disconnect()
         {
-            try
-            {
-                _sslStream?.Close();
-            }
-            catch
-            {
-                // ignored
-            }
-
+            if (_client != null && _client.Connected)
+                _client.Shutdown(SocketShutdown.Both);
+            _stream?.Close();
             _client?.Close();
         }
 
         public void SendMessage(ClientMessage message)
         {
-            ClientMessage.Send(_sslStream, message);
+            ClientMessage.Send(_stream, message);
         }
         
         public ServerMessage ReadMessage()
         {
-            return ServerMessage.Parse(_sslStream);
+            return ServerMessage.Parse(_stream);
         }
         
         public ServerMessage WaitMessage()
         {
-            do { } while (!_sslStream.CanRead);
+            do { } while (!_stream.CanRead);
             return ReadMessage();
         }
 
@@ -92,8 +91,8 @@ namespace RC.Client.Connection
 
         #region Fields
 
-        private SslStream _sslStream;
-        private TcpClient _client;
+        private SslStream _stream;
+        private Socket _client;
 
         #endregion
 

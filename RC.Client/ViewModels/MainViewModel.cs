@@ -10,8 +10,6 @@ namespace RC.Client.ViewModels
         {
             DeviceInfo = new DeviceInfoViewModel();
 
-            IsConnected = Application.Instance.IsConnected;
-            ReconnectionTime = Application.Instance.ReconnectionTime;
             SubscribeToApplicationEvents();
         }
 
@@ -23,6 +21,9 @@ namespace RC.Client.ViewModels
                 Application.Instance, nameof(Application.Instance.ConnectionStateChanged), OnConnectionStateChanged);
             WeakEventHandlerManager.Subscribe<ClientApplication, ReconnectionTimeChangedEventArgs, MainViewModel>(
                 Application.Instance, nameof(Application.Instance.ReconnectionTimeChanged), OnReconnectionTimeChanged);
+
+            IsConnected = Application.Instance.IsConnected;
+            ReconnectionTime = Application.Instance.ReconnectionTime;
         }
 
         private void OnConnectionStateChanged(object sender, ConnectionStateChangedEventArgs e)

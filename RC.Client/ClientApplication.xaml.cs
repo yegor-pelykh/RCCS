@@ -16,8 +16,8 @@ namespace RC.Client
         {
             base.Initialize();
             LoadCriticalComponents();
-            AvaloniaXamlLoader.Load(this);
-            ReconnectToServer();
+            LoadUserInterface();
+            Task.Run(ReconnectToServer);
         }
         
         protected override void OnExiting(object sender, EventArgs e)
@@ -43,6 +43,11 @@ namespace RC.Client
                 ForceExit();
             }
         }
+        
+        private void LoadUserInterface()
+        {
+            AvaloniaXamlLoader.Load(this);
+        }
 
         private void ForceExit()
         {
@@ -57,25 +62,22 @@ namespace RC.Client
 
         private void ReconnectToServer()
         {
-            Task.Run(() =>
+            var isReconnecting = false;
+            while (!IsConnected)
             {
-                var isReconnecting = false;
-                while (!IsConnected)
+                if (isReconnecting)
                 {
-                    if (isReconnecting)
+                    Task.Run(() =>
                     {
-                        Task.Run(() =>
-                        {
-                            for (ReconnectionTime = StartReconnectionTime;
-                                ReconnectionTime > 0;
-                                ReconnectionTime -= ReconnectionTimeout)
-                                Thread.Sleep(ReconnectionTimeout);
-                        }).Wait();
-                    }
-                    isReconnecting = true;
-                    ConnectToServer();
+                        for (ReconnectionTime = StartReconnectionTime;
+                            ReconnectionTime > 0;
+                            ReconnectionTime -= ReconnectionTimeout)
+                            Thread.Sleep(ReconnectionTimeout);
+                    }).Wait();
                 }
-            });
+                isReconnecting = true;
+                ConnectToServer();
+            }
         }
 
         private void ConnectToServer()
