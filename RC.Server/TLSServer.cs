@@ -4,6 +4,7 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using RC.Common.Helpers.StaticHelpers;
 using RC.Common.Message;
 using ClientMessages = RC.Common.Message.ClientMessages;
 using ServerMessages = RC.Common.Message.ServerMessages;
@@ -14,18 +15,31 @@ namespace RC.Server
     {
         #region Internal Methods
 
-        internal static void Run(X509Certificate2 certificate, CommunicationHandler communicationHandler)
+        internal static void Run(X509Certificate2 certificate)
         {
             _certificate = certificate;
 
-            var listener = new TcpListener(IPAddress.Any, Port);
-            listener.Start();
+            var localEndPoint = new IPEndPoint(IPAddress.Any, Port);
 
-            while (true)
+            var listener = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+            try
             {
-                Console.WriteLine("Waiting for a client to connect...");
-                var client = listener.AcceptTcpClient();
-                Task.Run(() => ProcessClient(client, communicationHandler));
+                listener.Bind(localEndPoint);
+                listener.Listen(100);
+
+                while (true)
+                {
+                    Console.WriteLine("Waiting for a connection...");
+
+                    var client = listener.Accept();
+                    Task.Run(() => ProcessClient(client));
+                }
+
+            }
+            catch (Exception e)
+            {
+                ConsoleHelper.PrintException(e);
             }
         }
 
@@ -45,61 +59,57 @@ namespace RC.Server
             return ReadMessage(stream);
         }
 
-        internal static IPEndPoint GetClientEndPoint(this TcpClient client)
-        {
-            return client.Client.RemoteEndPoint as IPEndPoint;
-        }
-
         #endregion
 
         #region Private Methods
 
-        private static void ProcessClient(TcpClient client, CommunicationHandler communicationHandler)
+        private static void ProcessClient(Socket client)
         {
             var clientId = Guid.Empty;
-            var stream = new SslStream(client.GetStream(), false);
+
+            using var ns = new NetworkStream(client, true);
+            using var stream = new SslStream(ns, false);
+
             try
             {
                 stream.AuthenticateAsServer(_certificate, clientCertificateRequired: false, checkCertificateRevocation: true);
 
                 stream.ReadTimeout = 5000;
                 stream.WriteTimeout = 5000;
-
+                
                 clientId = Greet(client, stream);
 
-                communicationHandler?.Invoke(client, stream);
+                CommunicationHandler.OnCommunication(client, stream);
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception: {0}", e.Message);
-                if (e.InnerException != null)
-                    Console.WriteLine("Inner exception: {0}", e.InnerException.Message);
+                ConsoleHelper.PrintException(e);
             }
             finally
             {
                 if (clientId != Guid.Empty)
-                    ClientManager.RemoveClient(clientId);
-                ClientManager.CloseClient(client);
+                    ClientManager.RemoveClientInfo(clientId);
+                stream.Close();
             }
         }
-
-        private static Guid Greet(TcpClient client, SslStream stream)
+        
+        private static Guid Greet(Socket client, SslStream stream)
         {
             var message = stream.WaitMessage();
             if (message.MessageType != ClientMessageType.Greeting ||
                 !(message is ClientMessages.Greeting clientGreeting))
                 throw new Exception("The first message from the client should be a greeting.");
 
-            var id = clientGreeting.Id;
-            ClientManager.AddClient(clientGreeting.Id, client);
+            var clientInfo = new ClientInfo(client, stream);
+            ClientManager.AddClientInfo(clientGreeting.Id, clientInfo);
 
-            var endPoint = client.GetClientEndPoint();
+            var endPoint = (IPEndPoint)client.RemoteEndPoint;
             stream.SendMessage(new ServerMessages.Greeting
             {
                 Ip = endPoint.Address
             });
 
-            return id;
+            return clientGreeting.Id;
         }
 
         #endregion
@@ -113,12 +123,6 @@ namespace RC.Server
         #region Constants
 
         private const int Port = 12321;
-
-        #endregion
-
-        #region Delegate Definitions
-
-        internal delegate void CommunicationHandler(TcpClient client, SslStream stream);
 
         #endregion
 

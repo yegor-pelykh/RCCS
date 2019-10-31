@@ -8,7 +8,7 @@ namespace RC.Server
 {
     internal static class CommunicationHandler
     {
-        internal static void OnCommunication(TcpClient client, SslStream stream)
+        internal static void OnCommunication(Socket client, SslStream stream)
         {
 
         }

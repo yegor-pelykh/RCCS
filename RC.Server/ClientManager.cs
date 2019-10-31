@@ -8,40 +8,26 @@ namespace RC.Server
     {
         #region Internal methods
         
-        internal static void AddClient(Guid id, TcpClient client)
+        internal static void AddClientInfo(Guid id, ClientInfo info)
         {
-            if (Clients.TryGetValue(id, out var currentClient) && !ReferenceEquals(currentClient, client))
-                CloseClient(currentClient);
-            Clients[id] = client;
+            Clients[id] = info;
         }
         
-        internal static void RemoveClient(Guid id)
+        internal static void RemoveClientInfo(Guid id)
         {
-            if (Clients.TryGetValue(id, out var currentClient))
-                CloseClient(currentClient);
             Clients.Remove(id);
         }
 
-        internal static void CloseClient(TcpClient client)
+        internal static ClientInfo GetClientInfo(Guid id)
         {
-            try
-            {
-                var stream = client.GetStream();
-                stream.Close();
-            }
-            catch
-            {
-                // ignored
-            }
-
-            client.Close();
+            return Clients.TryGetValue(id, out var info) ? info : null;
         }
 
         #endregion
 
         #region Static Readonly Fields
 
-        private static readonly Dictionary<Guid, TcpClient> Clients = new Dictionary<Guid, TcpClient>();
+        private static readonly Dictionary<Guid, ClientInfo> Clients = new Dictionary<Guid, ClientInfo>();
 
         #endregion
 
