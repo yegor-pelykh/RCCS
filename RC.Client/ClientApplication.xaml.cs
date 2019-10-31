@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Avalonia.Markup.Xaml;
 using RC.Client.Connection;
 using RC.Client.Storage;
+using RC.Common.Helpers.StaticHelpers;
 
 namespace RC.Client
 {
@@ -15,11 +16,16 @@ namespace RC.Client
         public override void Initialize()
         {
             base.Initialize();
+            LoadCommandLineArguments();
             LoadCriticalComponents();
             LoadUserInterface();
             Task.Run(ReconnectToServer);
         }
-        
+
+        #endregion
+
+        #region Protected Methods
+
         protected override void OnExiting(object sender, EventArgs e)
         {
             ReleaseResources();
@@ -30,11 +36,24 @@ namespace RC.Client
 
         #region Private Methods
 
+        private void LoadCommandLineArguments()
+        {
+            try
+            {
+                CommandLineArguments = new CommandLineArguments();
+            }
+            catch (Exception e)
+            {
+                ConsoleHelper.PrintException(e);
+                ForceExit();
+            }
+        }
+
         private void LoadCriticalComponents()
         {
             try
             {
-                Storage = new DataStorage();
+                Storage = new DataStorage(CommandLineArguments.MachineConfig, CommandLineArguments.UserConfig);
                 Connection = new TLSClient();
             }
             catch (Exception e)
@@ -106,6 +125,8 @@ namespace RC.Client
         public DataStorage Storage { get; private set; }
 
         public TLSClient Connection { get; private set; }
+
+        internal CommandLineArguments CommandLineArguments { get; private set; }
 
         public bool IsConnected
         {
