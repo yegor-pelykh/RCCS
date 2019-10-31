@@ -7,13 +7,13 @@ namespace RC.Client.Storage
 {
     public class DataStorage
     {
-        public DataStorage()
+        public DataStorage(string machineConfigPath = null, string userConfigPath = null)
         {
             Directory.CreateDirectory(MachineDirectoryPath);
             Directory.CreateDirectory(UserDirectoryPath);
 
-            LoadMachineSection();
-            LoadUserSection();
+            LoadMachineSection(machineConfigPath);
+            LoadUserSection(userConfigPath);
         }
 
         #region Public Methods
@@ -42,44 +42,68 @@ namespace RC.Client.Storage
 
         #region Internal Methods
 
-        internal void LoadMachineSection()
+        internal void LoadMachineSection(string path = null)
         {
+            if (Machine != null)
+                SaveMachineSection();
+
+            var configPath = File.Exists(path)
+                ? path
+                : MachineStoragePath;
+
             try
             {
-                var contentsMachine = File.ReadAllText(MachineStoragePath);
+                var contentsMachine = File.ReadAllText(configPath);
                 Machine = JsonConvert.DeserializeObject<MachineSection>(contentsMachine);
+                Machine.ConfigPath = configPath;
             }
             catch (FileNotFoundException)
             {
                 Machine = MachineSection.GetDefault();
+                Machine.ConfigPath = configPath;
                 SaveMachineSection();
             }
         }
 
-        internal void LoadUserSection()
+        internal void LoadUserSection(string path = null)
         {
+            if (User != null)
+                SaveUserSection();
+
+            var configPath = File.Exists(path)
+                ? path
+                : UserStoragePath;
+
             try
             {
                 var contentsUser = File.ReadAllText(UserStoragePath);
                 User = JsonConvert.DeserializeObject<UserSection>(contentsUser);
+                User.ConfigPath = configPath;
             }
             catch (FileNotFoundException)
             {
                 User = UserSection.GetDefault();
+                User.ConfigPath = configPath;
                 SaveUserSection();
             }
         }
 
         internal void SaveMachineSection()
         {
+            if (Machine.ConfigPath == null)
+                return;
+
             var contentsMachine = JsonConvert.SerializeObject(Machine);
-            File.WriteAllText(MachineStoragePath, contentsMachine);
+            File.WriteAllText(Machine.ConfigPath, contentsMachine);
         }
 
         internal void SaveUserSection()
         {
+            if (User.ConfigPath == null)
+                return;
+
             var contentsUser = JsonConvert.SerializeObject(User);
-            File.WriteAllText(UserStoragePath, contentsUser);
+            File.WriteAllText(User.ConfigPath, contentsUser);
         }
 
         #endregion

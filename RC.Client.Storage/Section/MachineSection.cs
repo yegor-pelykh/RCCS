@@ -16,6 +16,13 @@ namespace RC.Client.Storage.Section
 
         #endregion
 
+        #region Ignorable Properties
+        
+        [JsonIgnore]
+        public string ConfigPath { get; set; }
+
+        #endregion
+
         #region Default Value Getters
 
         internal static MachineSection GetDefault()
