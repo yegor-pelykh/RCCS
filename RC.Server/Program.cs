@@ -2,38 +2,44 @@
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using RC.Common.Certification;
+using RC.Common.Helpers.StaticHelpers;
 
 namespace RC.Server
 {
-    internal class Program
+    internal static class Program
     {
         private static void Main(string[] args)
         {
-            if (args == null || args.Length < 2)
-            {
-                Console.WriteLine("No certificate file or private key file specified.");
-                Console.WriteLine("Press any key to exit...");
-                Console.ReadKey();
-                return;
-            }
-            
-            var certificatePath = args[0];
-            var keyPath = args[1];
-
-            X509Certificate2 certificate;
             try
             {
-                certificate = Certification.CreateCertificateWithPrivateKey(certificatePath, keyPath);
+                CommandLineArguments = new CommandLineArguments();
+
+                if (CommandLineArguments.CertificatePath == null)
+                    throw new Exception("No certificate file specified.");
+
+                if (CommandLineArguments.PrivateKeyPath == null)
+                    throw new Exception("No private key file specified.");
+
+                var certificate = Certification.CreateCertificateWithPrivateKey(CommandLineArguments.CertificatePath,
+                    CommandLineArguments.PrivateKeyPath);
+
+                TLSServer.Run(certificate);
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error loading certificate or private key.");
-                Console.WriteLine($"Exception: {e.Message}");
-                return;
-            }
+                ConsoleHelper.PrintException(e);
 
-            TLSServer.Run(certificate);
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey();
+            }
         }
+
+        #region Properties
+
+        internal static CommandLineArguments CommandLineArguments { get; private set; }
+
+        #endregion
+
 
     }
 
