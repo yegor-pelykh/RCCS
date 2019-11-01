@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "RC.Server": {
-      "commandName": "Project",
-      "commandLineArgs": "\"../../../../KeyCert/cert.crt\" \"../../../../KeyCert/key.pem\""
-    }
-  }
-}
